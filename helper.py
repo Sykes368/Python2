@@ -1,4 +1,5 @@
 # Color codes & quick access to error, and warning message prefixes
+
 class Text:
     # Colors
     BLUE = '\033[94m'
@@ -12,5 +13,7 @@ class Text:
     UNDERLINE = '\033[4m'
     RESET = '\033[0m'
     # Prefixes
-    ERROR = f'{GRAY}[{RED}!!{GRAY}]{RESET}'
-    WARN = f'{GRAY}[{YELLOW}!{GRAY}]{RESET}'
+    ERROR = f'{GRAY}[{RED}!!{GRAY}]{RESET} '
+    WARN = f'{GRAY}[{YELLOW}!{GRAY}]{RESET} '
+    INFO = f'{GRAY}[{BLUE}*{GRAY}]{RESET} '
+    SUCCESS = f'{GRAY}[{GREEN}*{GRAY}]{RESET} '
