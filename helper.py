@@ -1,7 +1,4 @@
 # Color codes & quick access to error, and warning message prefixes
-from sre_constants import SUCCESS
-
-
 class Text:
     # Colors
     BLUE = '\033[94m'
