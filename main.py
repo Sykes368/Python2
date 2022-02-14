@@ -1,77 +1,111 @@
 from helper import Text
 import psutil
-import platform
-import sys
-import os
+import parted
 
-# Prints the OS type and some properties about the OS including Release version, hostname, and some python imformation
-def print_operating_system():
-    os = "Unknown OS"
-    if psutil.LINUX     :  os="Linux"
-    elif psutil.WINDOWS :  os="Windows"
-    elif psutil.MACOS   :  os="Mac OSX"
-    elif psutil.FREEBSD :  os="FreeBSD"
-    elif psutil.NETBSD  :  os="NetBSD"
-    elif psutil.OPENBSD :  os="OpenBSD"
-    elif psutil.BSD     :  os="BSD"
-    elif psutil.SUNOS   :  os="Solaris"
-    elif psutil.AIX     :  os="AIX"
-    elif psutil.POSIX   :  os="POSIX"
-
-    print(f"OS Type/Name: {Text.BLUE}{os}{Text.RESET} \nOS Release: {Text.BLUE}{platform.release()}{Text.RESET} \nHostname: {Text.BLUE}{platform.node()}{Text.RESET}")
-    print(f"Python Version: {Text.BLUE}{platform.python_version()}{Text.RESET} \nPython Implementation: {Text.BLUE}{platform.python_implementation()}{Text.RESET}")
+# Prevents the script from running on non-linux systems
+def check_os():
+    if not psutil.LINUX:
+        print(f"{Text.ERROR}Script designed for Linux operating systems only!")
+        exit(0)
 
 
-# Lists all users currently logged in and some of their session atributes.
-def print_online_users():
-    print("\nList of Users Currently Logged In:")
-    for user in psutil.users():
-        print(f"Username: {Text.BLUE}{user.name}{Text.RESET} \n\tSession PID: {Text.BLUE}{user.pid}{Text.RESET} \n\tTerminal: {Text.BLUE}{user.terminal}{Text.RESET} \n\tHost: {Text.BLUE}{user.host}{Text.RESET}")
-
-
-# Prints a short list of 20 processes running on the system
-def print_short_processes():
-    print("\nShort List of 20 Running Processes: ")
-    print("\tPID     : Process Name") 
-    print("\t--------:-------------")
+# Converts data sizes into a human readable format 
+def readable_size(size):
     
-    i = 0   # Used to limit the number of processes in the list
+    temp = f"{int(size/float(1<<40))} TB"
+    
+    if temp == "0 TB":
+        temp = f"{int(size/float(1<<30))} GB"
+    if temp == "0 GB":
+        temp = f"{int(size/float(1<<20))} MB"
+    if temp == "0 MB":
+        temp = f"{int(size/float(1<<10))} KB"
+    if temp == "0 KB":
+        temp = f"{size} B"
 
-    # Prints out 20 processes currently running on the system
-    for process in psutil.process_iter():
-        name = process.name()
-        pid = process.pid
+    return temp
 
-        print(f"\t{pid}\t: {Text.BLUE}{name}{Text.RESET}")
-        
-        # Breaks the loop after 20 iterations
-        i+=1
-        if i==20:
+
+# Gets and Prints information about all mounted drive partitions and their usage
+def print_drive_info():
+    print(f"{Text.BOLD}All Mounted Partitions:{Text.RESET}")
+    for partition in psutil.disk_partitions():
+        print(f"  Partition: {Text.BLUE}{partition.device}{Text.RESET}")
+        print(f"\tMount Point: {Text.BLUE}{partition.mountpoint}{Text.RESET}")
+
+        usage = psutil.disk_usage(partition.mountpoint)
+        print(f"\tTotal: {Text.BLUE}{readable_size(usage.total)}{Text.RESET}")
+        print(f"\tUsed: {Text.BLUE}{readable_size(usage.used)}{Text.RESET}")
+        print(f"\tFree: {Text.BLUE}{readable_size(usage.free)}{Text.RESET}")
+        print(f"\t% Used: {Text.BLUE}{usage.percent}%{Text.RESET}")
+
+
+# Gets and Prints memory stats
+def print_memory_stats():
+    memory = psutil.virtual_memory()
+    print(f"{Text.BOLD}Memory Stats:{Text.RESET}")
+    print(f"\tTotal: {Text.BLUE}{readable_size(memory.total)}{Text.RESET}")
+    print(f"\tUsed: {Text.BLUE}{readable_size(memory.used)}{Text.RESET}")
+    print(f"\tFree: {Text.BLUE}{readable_size(memory.available)}{Text.RESET}")
+    print(f"\t% Used: {Text.BLUE}{memory.percent}%{Text.RESET}")
+
+
+# Gets and prints swap stats
+def print_swap_stats():
+    swap = psutil.swap_memory()
+    print(f"{Text.BOLD}Swap Stats:{Text.RESET}")
+    print(f"\tTotal: {Text.BLUE}{readable_size(swap.total)}{Text.RESET}")
+    print(f"\tUsed: {Text.BLUE}{readable_size(swap.used)}{Text.RESET}")
+    print(f"\tFree: {Text.BLUE}{readable_size(swap.free)}{Text.RESET}")
+    print(f"\t% Used: {Text.BLUE}{swap.percent}%{Text.RESET}")
+
+
+# Creates partiton to fill free space on /dev/sda
+# Did not test - DESTRUCTIVE METHOD
+def create_partition():
+    device=parted.getDevice("/dev/sda")
+    disk=parted.newDisk(device)
+    free_space_regions = disk.getFreeSpaceRegions()
+
+    # Gets the free space region located at the end of the disk
+    geometry = free_space_regions[-1]
+
+    # Creates new partition
+    filesystem = parted.FileSystem(type='ext4', geometry=geometry)
+    new_partition = parted.Partition(disk=disk, type=parted.PARTITION_NORMAL, fs = filesystem, geometry=geometry)
+    new_partition.name = "TemporaryNewPartition"
+
+    # Writes new partition to disk
+    disk.addPartition(partition=new_partition, constraint=device.optimalAlignedConstraint)
+    disk.commit()
+
+    print(f"{Text.SUCCESS} Created New Partition")
+
+
+# Removes specified partition /dev/sda2
+# Did not test - DESTRUCTIVE METHOD
+def remove_partition():
+    partition_path="/dev/sda2"
+    device=parted.getDevice("/dev/sda")
+    disk=parted.newDisk(device)
+
+    # Using the path to the partition finds the partition and sets the variable to it.
+    for part in disk.partitions:
+        if part.path == partition_path:
+            partition = part
             break
 
+    disk.deletePartition(partition)
 
-# Invokes a new python3 session. 
-# Sleep is used to make the session pause for 10 seconds allowing for termination before it ends normally.
-def invoke_python3():
-    psutil.Popen([sys.executable, "-c", "import time ; time.sleep(10)"])
-    print(f"{Text.INFO}Invoked New Python Session")
+    print(f"{Text.SUCCESS} Deleted Partition")
 
-
-# Interates though all running proccesses and kills any python process except for the one that is running this script
-def kill_python_processes():
-    for process in psutil.process_iter():
-        # Checks in the process name contains "python"
-        if process.name().__contains__("python"):
-            # This if statement. Prevents the script from terminating its own python process
-            if process.pid != os.getpid():
-                process.terminate()
-                print(f"{Text.INFO}Terminated Python Session with PID: {process.pid}")
-            
-    print(f"{Text.INFO}Finished Killing Other Python Sessions")
 
 if __name__ == '__main__':
-    print_operating_system()
-    print_online_users()
-    print_short_processes()
-    invoke_python3()
-    kill_python_processes()
+    check_os()
+    print_drive_info()
+    print_memory_stats()
+    print_swap_stats()
+    print(f"\n{Text.INFO}{Text.BOLD}Call {Text.BLUE}create_partition(){Text.RESET}  here{Text.RESET}\n")
+    print_drive_info()
+    print(f"\n{Text.INFO}{Text.BOLD}Call {Text.BLUE}remove_partition(){Text.RESET} here{Text.RESET}\n")
+    print_drive_info()
