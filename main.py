@@ -2,7 +2,7 @@ from helper import Text
 import socket
 from datetime import datetime
 
-# Scanns all ports on a device given the hostname
+# Scans all ports on a device given the hostname
 def port_scanner(hostname):
     try:
         start_time = datetime.now()
