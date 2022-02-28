@@ -1,37 +1,37 @@
+from scapy.all import *
 from helper import Text
-import socket
-from datetime import datetime
+import re
 
-# Scans all ports on a device given the hostname
-def port_scanner(hostname):
-    try:
-        start_time = datetime.now()
-        host_ip = socket.gethostbyname(hostname)
-        print(f"Starting scan on {host_ip}")
-        print("PORT\t:  STATUS")
-        print("--------:--------")
+# Sniffs X packets and prints/saves info about each packet
+def sniffer(num, save,filename):
+    capture = sniff(filter='ip',prn=lambda s: (s.sprintf(f"Time: {Text.BLUE}%IP.time%{Text.RESET}\nProtocol: {Text.BLUE}%IP.proto%{Text.RESET}\nPort: {Text.BLUE}%IP.sport%{Text.RESET} \nSource IP: {Text.BLUE}%IP.src%{Text.RESET} \nDestination IP: {Text.BLUE}%IP.dst%{Text.RESET} \nFlags: {Text.BLUE}%IP.flags%{Text.RESET} \nData: {Text.BLUE}%Raw.load%{Text.RESET}\n")), count=num)
 
-        # Scans all ports & prints open ports
-        for port in range(1, 65535):
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket.setdefaulttimeout(1)
-             
-            connect = s.connect_ex((host_ip, port))
-            if(connect == 0):
-                print(f"{port}\t:  OPEN")
-            s.close()
-        end_time = datetime.now()
-        print(f"Scan Took: {end_time - start_time}")
-    except socket.gaierror:
-        print(f"{Text.ERROR}Invalid hostname/IP")
-    except socket.herror:
-        print(f"{Text.ERROR}Socket herror occured")
-    except socket.timeout:
-        print(f"{Text.ERROR}Socket timed-out")
-    except OverflowError:
-        print(f"{Text.ERROR}Invalid port number. Port must be 1-65535")
-    except KeyboardInterrupt:
-        print(f"{Text.INFO}Keyboard Interrupt: Stopping Scan")
+    # Writes output to pcap
+    if save:
+        wrpcap(f"{filename}.pcap", capture)
+    
+    # Prints Capture Summary
+    print(capture)
 
+
+# Gets User Input & Runs sniffer()
 if __name__ == '__main__':
-   port_scanner("localhost")
+    print("Python Packet Sniffer!\n")
+   
+    num = input("Number of packets to capture [default: 10]: ") 
+    if not re.match("^[0-9]+", num):
+        num = 10
+    
+    save = input("Save output to pcap [y/N]? ")
+
+    # Checks input and verifies pcap filename
+    if re.match("y", save) or re.match("Y", save): 
+        save = True
+        filename = input("Pcap filename [default: out]: ")
+        if filename==None or filename=="":
+            filename="out"
+    else:
+        save = False
+        filename=""
+
+    sniffer(int(num), save, filename)
