@@ -9,12 +9,10 @@ import psutil
 
 # Checks for linux operating system and root/sudo permissions
 def check_os_and_permissions():
-    # Checks that the script is being used on a linux system
     if not psutil.POSIX:
         print(f"{Text.ERROR}Script is only compatible with linux systems, and possibly other unix operating systems(UNTESTED)")
         exit(1)
 
-    # Checks that the script has root permissions
     if not os.geteuid() == 0:
         print(f"{Text.ERROR}Script must be used with sudo or as root.")
         exit(1)
