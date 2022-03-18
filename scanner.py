@@ -44,10 +44,11 @@ def arp_scan(network):
         reply_count = str(ans).split(' ')[4][6:-1]
 
         if reply_count == "0":
-            print(f"{Text.WARN}Did not receive any ARP replies from the {network} network.")
+            print(f"{Text.WARN}Did not receive any ARP replies from the {Text.BLUE}{network}{Text.RESET} network.")
             return 1
         else:
-            print(f"{Text.SUCCESS}Received {reply_count} ARP replies from the {network} network.")
+            print(f"{Text.SUCCESS}Received {Text.BLUE}{reply_count}{Text.RESET} ARP replies from the {Text.BLUE}{network}{Text.RESET} network.")
+            print(f"\n{Text.INFO}All identified devices connected to the {Text.BLUE}{network}{Text.RESET} network:")
             ans.nsummary(lambda s, r: r.sprintf(f"\nIP Address  : {Text.BLUE}%ARP.psrc%{Text.RESET}\nMAC Address : {Text.BLUE}%Ether.src%{Text.RESET}\n"))
        
         return 0

@@ -10,5 +10,5 @@ if __name__ == '__main__':
     print(f"{Text.INFO}This device is connected to {Text.BLUE}{len(networks)}{Text.RESET} network(s): {Text.BLUE}{networks}{Text.RESET}")
 
     for network in networks:
-        print(f"{Text.INFO}ARP Scanning the {network} network.")
+        print(f"{Text.INFO}ARP Scanning the {Text.BLUE}{network}{Text.RESET} network.")
         scanner.arp_scan(network)
