@@ -1,14 +1,11 @@
 from helper import Text
-import scanner
+from browser import *
 
 
-# Checks compatibility, gets all connected networks and run an arp scan on each network
+# Gets url from user, lanuches firefox,  then navigates to the url
 if __name__ == '__main__':
-    scanner.check_os_and_permissions()
-
-    networks = scanner.get_networks()
-    print(f"{Text.INFO}This device is connected to {Text.BLUE}{len(networks)}{Text.RESET} network(s): {Text.BLUE}{networks}{Text.RESET}")
-
-    for network in networks:
-        print(f"{Text.INFO}ARP Scanning the {Text.BLUE}{network}{Text.RESET} network.")
-        scanner.arp_scan(network)
+    print(f"{Text.INFO}This script requires that {Text.BLUE}geckodriver{Text.RESET} is in the PATH")
+   
+    url = get_url()
+    firefox_instance = lanuch_firefox()
+    navigate_to(firefox_instance, url)
