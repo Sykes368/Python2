@@ -1,0 +1,5 @@
+www.noaa.gov
+info.cern.ch
+docs.python.org
+www.google.com
+www.gnu.org

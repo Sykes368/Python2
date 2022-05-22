@@ -1,0 +1,7 @@
+Status    : Domain
+----------:----------------
+Secure    : www.noaa.gov
+Insecure  : info.cern.ch
+Secure    : docs.python.org
+Secure    : www.google.com
+Secure    : www.gnu.org
